@@ -2,7 +2,7 @@
 let myMap = L.map("map", {
     center: [20.0, 5.0],
     zoom: 2
-  });
+});
 
 // Add a tile layer.
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -14,46 +14,22 @@ let earthquakeDataUrl = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summa
 
 // Function to determine the marker radius based on earthquake magnitude
 function getRadius(magnitude) {
-    // The '?' symbol on JS is a shorthand for an if-else statement, If magnitude is 0, null, nan, or false, the magnitude shall be 1.
-    return magnitude ? magnitude * 4 : 1;  
+    return magnitude ? magnitude * 4 : 1;  // Increased the multiplier to make circles larger
 }
 
 // Function to determine the marker color based on earthquake depth (green to red)
 function getColor(depth) {
-    // Updated depth limits and corresponding colors (green to red)
-    let depthLimits = [-10, 10, 30, 50, 70, 90];
-    let depthColors = [
-        "#00FF00", // green (shallow)
-        "#ADFF2F", // light green
-        "#FFD580", // light orange
-        "#FFA500", // orange
-        "#FF4500", // dark orange
-        "#FF0000"  // red (deep)
-    ];
-
-    // Loop through the depth limits to find the correct color for each depth
-    for (let i = 0; i < depthLimits.length; i++) {
-        if (depth <= depthLimits[i]) {
-            return depthColors[i];
-        }
-    }
-
-    // Return the deepest color (red) for depths greater than 90 km
-    return depthColors[depthColors.length - 1];
+    // Use a series of conditional statements to determine color based on depth
+    if (depth <= 10) return "#00FF00"; // green (shallow)
+    else if (depth <= 30) return "#ADFF2F"; // light green
+    else if (depth <= 50) return "#FFD580"; // light orange
+    else if (depth <= 70) return "#FFA500"; // orange
+    else if (depth <= 90) return "#FF4500"; // dark orange
+    else return "#FF0000"; // red (deep)
 }
 
 // Fetch earthquake data and plot it on the map
 d3.json(earthquakeDataUrl).then(function (data) {
-    let depthLimits = [-10, 10, 30, 50, 70, 90];
-    let depthColors = [
-        "#00FF00", // green (shallow)
-        "#ADFF2F", // light green
-        "#FFD580", // light orange
-        "#FFA500", // orange
-        "#FF4500", // dark orange
-        "#FF0000"  // red (deep)
-    ];
-
     // Create the GeoJSON layer
     let geojson = L.geoJSON(data, {
         pointToLayer: function (feature, latlng) {
@@ -73,10 +49,6 @@ d3.json(earthquakeDataUrl).then(function (data) {
         }
     }).addTo(myMap);
 
-    // Manually set the limits and colors properties on the geojson object
-    geojson.limits = depthLimits;
-    geojson.colors = depthColors;
-
     // Call the function to add the legend
     addLegend(geojson);
 });
@@ -87,31 +59,32 @@ function addLegend(geojson) {
 
     legend.onAdd = function () {
         let div = L.DomUtil.create("div", "info legend");
-
-        // Access limits and colors from the geojson object
-        let limits = geojson.limits;
-        let colors = geojson.colors;
+        let limits = [-10, 10, 30, 50, 70, 90]; // Depth limits
+        let colors = [
+            "#00FF00", // green (shallow)
+            "#ADFF2F", // light green
+            "#FFD580", // light orange
+            "#FFA500", // orange
+            "#FF4500", // dark orange
+            "#FF0000"  // red (deep)
+        ];
         let labels = [];
 
         // Add a header to the legend
         let legendInfo = "<h1>Earthquake Depth (km)</h1>";
-
         div.innerHTML = legendInfo;
 
         // Loop through each limit and color to create a label for the legend
         for (let i = 0; i < limits.length; i++) {
-            // initial value
             let from = limits[i];
-            // end value, it adds a '+' to the final value range i.e. 90+
             let to = limits[i + 1] ? limits[i + 1] : "+";
-            // add the color (colors array) and the values to a the legeng list.
             labels.push(
                 `<li><span style="background-color: ${colors[i]}"></span> ${from} - ${to} km</li>`
             );
         }
 
         // Join the labels into a list and add them to the div
-        div.innerHTML += "<ul>" + labels.join("") + "</ul>"; // unordered list to div 
+        div.innerHTML += "<ul>" + labels.join("") + "</ul>"; // Unordered list to div 
 
         return div;
     };

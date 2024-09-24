@@ -24,25 +24,6 @@ let earthquakeDataUrl = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summa
 // Tectonic Plates URL
 let tectonicPlatesUrl = 'https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json';
 
-// Add earthquake data layer
-let earthquakeLayer = L.geoJSON(null, {
-    pointToLayer: function (feature, latlng) {
-        return L.circleMarker(latlng, {
-            radius: getRadius(feature.properties.mag),
-            fillColor: getColor(feature.geometry.coordinates[2]),  // Depth is the 3rd coordinate
-            color: '#000',
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8
-        });
-    },
-    onEachFeature: function (feature, layer) {
-        layer.bindPopup(`<h3>Magnitude: ${feature.properties.mag}</h3>
-                         <p>Location: ${feature.properties.place}</p>
-                         <p>Depth: ${feature.geometry.coordinates[2]} km</p>`);
-    }
-});
-
 // Add tectonic plates layer
 let tectonicPlatesLayer = L.geoJSON(null, {
     style: function () {
@@ -68,15 +49,33 @@ d3.json(tectonicPlatesUrl).then(function(data) {
 function getRadius(magnitude) {
     return magnitude ? magnitude * 4 : 1;  // Increased the multiplier to make circles larger
 }
+// Add earthquake data layer
+let earthquakeLayer = L.geoJSON(null, {
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+            radius: getRadius(feature.properties.mag),
+            fillColor: getColor(feature.geometry.coordinates[2]),  // Depth is the 3rd coordinate
+            color: '#000',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+    },
+    onEachFeature: function (feature, layer) {
+        layer.bindPopup(`<h3>Magnitude: ${feature.properties.mag}</h3>
+                         <p>Location: ${feature.properties.place}</p>
+                         <p>Depth: ${feature.geometry.coordinates[2]} km</p>`);
+    }
+});
 
 // Function to get color based on depth of earthquake (green to red gradient)
 function getColor(depth) {
-    return depth > 90 ? '#FF0000' :   // red (deep)
-           depth > 70 ? '#FF4500' : // light red
-           depth > 50 ? '#FFA500' : // orange
-           depth > 30 ? '#FFD700' : // light orange
-           depth > 10 ? '#ADFF2F' : // light green
-                        '#00FF00';  // green (shallow)
+    if (depth <= 10) return "#00FF00"; // green
+    else if (depth <= 30) return "#ADFF2F"; // light green
+    else if (depth <= 50) return "#FFD580"; // light orange
+    else if (depth <= 70) return "#FFA500"; // orange
+    else if (depth <= 90) return "#FF4500"; // dark orange
+    else return "#FF0000"; // red (deep)
 }
 
 // Base Layers
@@ -126,7 +125,7 @@ legend.onAdd = function() {
         // Create list item with color box and text
         let li = document.createElement('li');
         li.style.listStyle = 'none'; // Remove default list styling
-        li.style.padding = '5px 0'; // Add some padding for spacing
+        li.style.margin = '0'; // Remove default margin to eliminate extra space
 
         // Create a small colored box
         let colorBox = document.createElement('span');
